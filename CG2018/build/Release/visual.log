@@ -5,10 +5,10 @@
   main.cpp
   utils.cpp
   Generando código
-  47 of 48 functions (97.9%) were compiled, the rest were copied from previous compilation.
-    13 functions were new in current compilation
+  49 of 51 functions (96.1%) were compiled, the rest were copied from previous compilation.
+    11 functions were new in current compilation
     0 functions had inline decision re-evaluated but remain unchanged
   Generación de código finalizada
-  visual.vcxproj -> F:\Roger\UNI\3r\COMPG\CG2018\visual\visual\..\..\build\ComputerGraphics.exe
+  visual.vcxproj -> F:\Roger\UNI\3r\COMPG\ComputerGraphics\CG2018\visual\visual\..\..\build\ComputerGraphics.exe
   0 archivo(s) copiado(s)
   0 archivo(s) copiado(s)
