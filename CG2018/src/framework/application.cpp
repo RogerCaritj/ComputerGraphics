@@ -5,14 +5,14 @@
 int modo = 0;
 int changeRoute = 0;
 float count = 0;
-int size = 200;
+int size = 1000;
 float r = rand();
 int *arrayX = new int[size];
 int *arrayY = new int[size];
 int *randoms = new int[size];
 int clicX = 0;
 int clicY = 0;
-Image framebuffer2(800, 600);
+
 Application::Application(const char* caption, int width, int height)
 {
 	this->window = createWindow(caption, width, height);
@@ -51,18 +51,38 @@ void drawForms(Image* img)
 	
 }
 void circle(Image* img, int posX, int posY) {
-	float radius = 70; // radius
-	for (int angle = 0; angle < 360; angle += 1) {
-		// calculate x and y by using parametic formulas of circle
-		int x = (radius * cos(angle - count));
-		int y = (radius * sin(angle - count));
+	float radius1 = 100 * count; // radius for the big circle
+	float radius2 = 50 * count; // radius for the small cirle
 
-		// moving cordinates toward center of the display
-		int cx = posX + x;
-		int cy = posY + y;
+	for (int angle = 0; angle < 360; angle += 1) {
+		// calculate x and y by using parametic formulas of each circle
+		int x1 = (radius1 * cos(angle));
+		int y1 = (radius1 * sin(angle));
+		int x2 = (radius2 * cos(angle));
+		int y2 = (radius2 * sin(angle));
+
+		// moving cordinates toward center of the display for each circle
+		int cx1 = posX + x1;
+		int cy1 = posY + y1;
+		int cx2 = posX + x2;
+		int cy2 = posY + y2;
+		
+		// degradate the color until it disapears
+		int colorChanging1 = 255 - count * 250;
+		int colorChanging2 = 255 - (count - 0.15) * 200;
+
+		if (colorChanging1 <= 0) {
+			colorChanging1 = 0;
+		}
+		if (colorChanging2 <= 0) {
+			colorChanging2 = 0;
+		}
 
 		// character which made the circle
-		img->setPixelSafe(cx, cy, Color(255, 0, 0)); //random color
+		img->setPixelSafe(cx1, cy1, Color(colorChanging1, 0, 0));
+		if (count > 0.15){
+			img->setPixelSafe(cx2, cy2, Color(colorChanging2, 0, 0));
+		}
 	}
 	count = count + 0.01;
 }
@@ -151,20 +171,23 @@ void drawSnow(Image* img) {
 			y1 = y1 + 600;
 			y2 = y2 + 600;
 		}
-		img->setPixelSafe(x1, y1 , Color(255, 255, 255)); //random color
-		img->setPixelSafe(x2, y1, Color(255, 255, 255)); //random color
-		img->setPixelSafe(x1, y2, Color(255, 255, 255)); //random color
-		img->setPixelSafe(x2, y2, Color(255, 255, 255)); //random color
+		img->setPixelSafe(x1, y1 , Color(255, 255, 255));
+		img->setPixelSafe(x2, y1, Color(255, 255, 255)); 
+		img->setPixelSafe(x1, y2, Color(255, 255, 255)); 
+		img->setPixelSafe(x2, y2, Color(255, 255, 255)); 
 	}
 	count = count + 0.001;
 }
 //render one frame
 void Application::render(void)
 {
+
 	//Create a new Image (or we could create a global one if we want to keep the previous frame)
 	Image framebuffer( window_width, window_height );
+	Image framebuffer2(800, 600);
 
 	if (modo == 1){
+		
 		framebuffer2.fill(Color(0, 0, 0));
 		dividePixel(&framebuffer);
 		showImage(&framebuffer);
@@ -247,6 +270,9 @@ void Application::onMouseButtonDown( SDL_MouseButtonEvent event )
 	{
 		if (modo == 3) {
 			int a = size + 200;
+			if (a > 600) {
+				a = 600;
+			}
 			for (int i = size; i < a; i++) {
 				arrayX[i] = (rand() % 800);
 			}
@@ -256,11 +282,18 @@ void Application::onMouseButtonDown( SDL_MouseButtonEvent event )
 			for (int i = size; i < a; i++) {
 				randoms[i] = rand();
 			}
-			size = size + 200;
+			if (size > 600) {
+				size = 600;
+			}
+			else {
+				size = size + 200;
+			}
+			
 		}
 		else {
 			clicX = mouse_position.x;
 			clicY = mouse_position.y;
+			count = 0;
 			modo = 2;
 		}
 	}
