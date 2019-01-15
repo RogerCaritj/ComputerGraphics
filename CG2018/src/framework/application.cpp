@@ -5,6 +5,11 @@
 int modo = 0;
 int changeRoute = 0;
 float count = 0;
+float r = rand();
+int arrayX[500];
+int arrayY[500];
+int randoms[4];
+
 
 Application::Application(const char* caption, int width, int height)
 {
@@ -65,7 +70,6 @@ void dividePixel(Image* img) {
 	int randomColor1 = (((frand()) * 255) % 255);
 	int randomColor2 = (((frand()) * 255) % 255);
 	int randomColor3 = (((frand()) * 255) % 255);
-	
 
 		//Down left
 		for (int x = 380; x < 400; x++)
@@ -120,14 +124,26 @@ void dividePixel(Image* img) {
 			}
 		count = count + 0.05;
 }
-
+void bigPixel(Image* img, int a) {
+	img->setPixelSafe(a % 800, a % 600 , Color(255, 255, 255)); //random color
+	img->setPixelSafe(a % 800 + 1, a % 600, Color(255, 255, 255)); //random color
+	img->setPixelSafe(a % 800, a % 600 + 1, Color(255, 255, 255)); //random color
+	img->setPixelSafe(a % 800 + 1, a % 600 + 1, Color(255, 255, 255)); //random color
+}
+void drawSnow(Image* img) {
+	for (int i = 0; i < 500; i++) {
+		img->setPixelSafe(arrayX[i] + sin(count * 7) * 20, arrayY[i] - count * (arrayX[i] % 40) + 3, Color(255, 255, 255)); //random color
+		img->setPixelSafe(arrayX[i] + 1 + sin(count * 7) * 20, arrayY[i] - count * (arrayX[i] % 40) + 3, Color(255, 255, 255)); //random color
+		img->setPixelSafe(arrayX[i] + sin(count * 7) * 20, arrayY[i] - count * (arrayX[i] % 40) + 3, Color(255, 255, 255)); //random color
+		img->setPixelSafe(arrayX[i] + 1 + sin(count * 7) * 20, arrayY[i] + 1 - count * (arrayX[i] % 40) + 3, Color(255, 255, 255)); //random color
+	}
+	count = count + 0.01;
+}
 //render one frame
 void Application::render(void)
 {
 	//Create a new Image (or we could create a global one if we want to keep the previous frame)
 	Image framebuffer( window_width, window_height );
-
-
 
 	if (modo == 1){
 		dividePixel(&framebuffer);
@@ -138,8 +154,11 @@ void Application::render(void)
 		drawForms(&framebuffer);
 		showImage(&framebuffer);
 	}
+	else if (modo == 3) {
+		drawSnow(&framebuffer);
+		showImage(&framebuffer);
+	}
 	else{
-
 		bigerPixel(&framebuffer);
 		showImage(&framebuffer);
 	}
@@ -171,6 +190,11 @@ void Application::update(double seconds_elapsed)
 	{
 		count = 0;
 		modo = 2;
+	}
+	if (keystate[SDL_SCANCODE_3]) //if key 2 is pressed
+	{
+		count = 0;
+		modo = 3;
 	}
 
 
@@ -215,6 +239,15 @@ void Application::onMouseButtonUp( SDL_MouseButtonEvent event )
 //when the app starts
 void Application::start()
 {
+	for (int i = 0; i < 500; i++) {
+		arrayX[i] = (rand() % 800);
+	}
+	for (int i = 0; i < 500; i++) {
+		arrayY[i] = (rand() % 600);
+	}
+	for (int i = 0; i < 4; i++) {
+		randoms[i] = rand();
+	}
 	std::cout << "launching loop..." << std::endl;
 	launchLoop(this);
 }
