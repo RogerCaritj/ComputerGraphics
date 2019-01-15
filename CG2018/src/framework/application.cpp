@@ -5,11 +5,11 @@
 int modo = 0;
 int changeRoute = 0;
 float count = 0;
+int size = 200;
 float r = rand();
-int arrayX[500];
-int arrayY[500];
-int randoms[4];
-
+int *arrayX = new int[size];
+int *arrayY = new int[size];
+int *randoms = new int[size];
 
 Application::Application(const char* caption, int width, int height)
 {
@@ -131,11 +131,19 @@ void bigPixel(Image* img, int a) {
 	img->setPixelSafe(a % 800 + 1, a % 600 + 1, Color(255, 255, 255)); //random color
 }
 void drawSnow(Image* img) {
-	for (int i = 0; i < 500; i++) {
-		img->setPixelSafe(arrayX[i] + sin(count * 7) * 20, arrayY[i] - count * (arrayX[i] % 40) + 3, Color(255, 255, 255)); //random color
-		img->setPixelSafe(arrayX[i] + 1 + sin(count * 7) * 20, arrayY[i] - count * (arrayX[i] % 40) + 3, Color(255, 255, 255)); //random color
-		img->setPixelSafe(arrayX[i] + sin(count * 7) * 20, arrayY[i] - count * (arrayX[i] % 40) + 3, Color(255, 255, 255)); //random color
-		img->setPixelSafe(arrayX[i] + 1 + sin(count * 7) * 20, arrayY[i] + 1 - count * (arrayX[i] % 40) + 3, Color(255, 255, 255)); //random color
+	for (int i = 0; i < size; i++) {
+		int x1 = arrayX[i] + sin(count * (randoms[i] % 10 + 3)) * 20;
+		int x2 = arrayX[i] + sin(count * (randoms[i] % 10 + 3)) * 20 + 1;
+		int y1 = arrayY[i] - count * (arrayX[i] % 40) + 3;
+		int y2 = arrayY[i] - count * (arrayX[i] % 40) + 3 + 1;
+		if (y1 < 0) {
+			y1 = y1 + 600;
+			y2 = y2 + 600;
+		}
+		img->setPixelSafe(x1, y1 , Color(255, 255, 255)); //random color
+		img->setPixelSafe(x2, y1, Color(255, 255, 255)); //random color
+		img->setPixelSafe(x1, y2, Color(255, 255, 255)); //random color
+		img->setPixelSafe(x2, y2, Color(255, 255, 255)); //random color
 	}
 	count = count + 0.01;
 }
@@ -222,9 +230,21 @@ void Application::onKeyUp(SDL_KeyboardEvent event)
 //mouse button event
 void Application::onMouseButtonDown( SDL_MouseButtonEvent event )
 {
-	if (event.button == SDL_BUTTON_LEFT) //left mouse pressed
+	if (event.button == SDL_BUTTON_LEFT) //LEFT mouse pressed
 	{
-		//if you read mouse position from the event, careful, Y is reversed, use mouse_position instead
+		if (modo == 3) {
+			int a = size + 200;
+			for (int i = size; i < a; i++) {
+				arrayX[i] = (rand() % 800);
+			}
+			for (int i = size; i < a; i++) {
+				arrayY[i] = (rand() % 600);
+			}
+			for (int i = size; i < a; i++) {
+				randoms[i] = rand();
+			}
+			size = size + 200;
+		}
 	}
 }
 
@@ -239,13 +259,13 @@ void Application::onMouseButtonUp( SDL_MouseButtonEvent event )
 //when the app starts
 void Application::start()
 {
-	for (int i = 0; i < 500; i++) {
+	for (int i = 0; i < size; i++) {
 		arrayX[i] = (rand() % 800);
 	}
-	for (int i = 0; i < 500; i++) {
+	for (int i = 0; i < size; i++) {
 		arrayY[i] = (rand() % 600);
 	}
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < size; i++) {
 		randoms[i] = rand();
 	}
 	std::cout << "launching loop..." << std::endl;
