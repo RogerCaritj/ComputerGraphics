@@ -45,11 +45,21 @@ void bigerPixel(Image* img)
 			img->setPixelSafe(x, y, Color(randomColor1, randomColor2, randomColor3)); //random color
 		}
 }
+void spiral(Image* img, float x, float y) {
+	float angle = 0.0f;
 
-void drawForms(Image* img) 
-{
-	
+	// Space between the spirals
+	int a = 2, b = 2;
+	float x1, y1;
+	for (int i = 0; i < 150; i = i++)
+	{
+		angle = 0.1 * i;
+		x1 = (a + b * angle) * cos(angle);
+		y1 = (a + b * angle) * sin(angle);
+		img->setPixelSafe(x1 + x , y1 + y, Color(255, 255, 255));
+	}
 }
+
 void circle(Image* img, int posX, int posY) {
 	float radius1 = 100 * count; // radius for the big circle
 	float radius2 = 50 * count; // radius for the small cirle
@@ -86,21 +96,42 @@ void circle(Image* img, int posX, int posY) {
 	}
 	count = count + 0.01;
 }
-void spiral(Image* img) {
-	float x = 0;
-	float y = 0;
-	float angle = 0.0f;
+void triangle(Image* img, int x, int y) {
+	int i, j, k, n;
+	n = 25;
 
-	// Space between the spirals
-	int a = 2, b = 2;
-
-	for (int i = 0; i < 150; i++)
+	for (k = x; k <= n; k++)
 	{
-		angle = 0.1 * i;
-		x = (a + b * angle) * cos(angle);
-		y = (a + b * angle) * sin(angle);
-		img->setPixelSafe(x + 400, y + 300, Color(255, 0, 0)); //random color
+		for (j = y; j <= n - k; j++)
+			img->setPixelSafe(k, j, Color(255, 255, 255));
+		/*for (i = y; i <= 2 * k - 1; i++)
+			img->setPixelSafe(i, j, Color(255, 255, 255));*/
 	}
+}
+void circleSimple(Image* img, int posX, int posY) {
+	float radius = 25; // radius for the big circle
+
+	for (int angle = 0; angle < 360; angle += 1) {
+		// calculate x and y by using parametic formulas of each circle
+		int x = (radius * cos(angle));
+		int y = (radius * sin(angle));
+
+		// moving cordinates toward center of the display for each circle
+		int cx = posX + x;
+		int cy = posY + y;
+
+		// character which made the circle
+		img->setPixelSafe(cx, cy, Color(255, 255, 255));
+	}
+}
+void drawForms(Image* img)
+{
+	circleSimple(img, 200, 200);
+	circleSimple(img, 600, 400);
+	spiral(img, 200, 300);
+	spiral(img, 600, 300);
+	triangle(img, 400, 300);
+
 }
 void dividePixel(Image* img) {
 	int randomColor1 = (((frand()) * 255) % 255);
@@ -193,13 +224,18 @@ void Application::render(void)
 		showImage(&framebuffer);
 	}
 	else if (modo == 2) {
-		circle(&framebuffer2, clicX, clicY);
-		showImage(&framebuffer2);
+		spiral(&framebuffer, 400, 300);
+		drawForms(&framebuffer);
+		showImage(&framebuffer);
 	}
 	else if (modo == 3) {
 		framebuffer2.fill(Color(0, 0, 0));
 		drawSnow(&framebuffer);
 		showImage(&framebuffer);
+	}
+	else if (modo == 5) {
+		circle(&framebuffer2, clicX, clicY);
+		showImage(&framebuffer2);
 	}
 	else{
 		framebuffer2.fill(Color(0, 0, 0));
@@ -269,32 +305,24 @@ void Application::onMouseButtonDown( SDL_MouseButtonEvent event )
 	if (event.button == SDL_BUTTON_LEFT) //LEFT mouse pressed
 	{
 		if (modo == 3) {
-			int a = size + 200;
-			if (a > 600) {
-				a = 600;
-			}
-			for (int i = size; i < a; i++) {
-				arrayX[i] = (rand() % 800);
-			}
-			for (int i = size; i < a; i++) {
-				arrayY[i] = (rand() % 600);
-			}
-			for (int i = size; i < a; i++) {
-				randoms[i] = rand();
-			}
-			if (size > 600) {
-				size = 600;
+			if (size < 0) {
+				size = 0;
 			}
 			else {
-				size = size + 200;
+				size = size - 100;
 			}
+			if (size == 0) {
+				size = size + 1000;
+			}
+			
+			
 			
 		}
 		else {
 			clicX = mouse_position.x;
 			clicY = mouse_position.y;
 			count = 0;
-			modo = 2;
+			modo = 5;
 		}
 	}
 }
