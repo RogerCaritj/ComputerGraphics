@@ -12,6 +12,7 @@ int *arrayY = new int[size];
 int *randoms = new int[size];
 int clicX = 0;
 int clicY = 0;
+Image framebuffer3(800, 600);
 
 Application::Application(const char* caption, int width, int height)
 {
@@ -97,15 +98,13 @@ void circle(Image* img, int posX, int posY) {
 	count = count + 0.01;
 }
 void triangle(Image* img, int x, int y) {
-	int i, j, k, n;
-	n = 25;
-
-	for (k = x; k <= n; k++)
-	{
-		for (j = y; j <= n - k; j++)
-			img->setPixelSafe(k, j, Color(255, 255, 255));
-		/*for (i = y; i <= 2 * k - 1; i++)
-			img->setPixelSafe(i, j, Color(255, 255, 255));*/
+	const int SIZE = 35;
+	for (int y1 = 0; y1 <= SIZE; ++y1) {
+		for (int x1 = 0; x1 <= SIZE * 2; ++x1) {
+			if (abs(x1 - SIZE) < (y1 + 1)) {
+				img->setPixelSafe(x1 + x, y1 + y, Color(255, 255, 255));
+			}
+		}
 	}
 }
 void circleSimple(Image* img, int posX, int posY) {
@@ -124,14 +123,24 @@ void circleSimple(Image* img, int posX, int posY) {
 		img->setPixelSafe(cx, cy, Color(255, 255, 255));
 	}
 }
+void square(Image* img, int x, int y) {
+	int size = 40;
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < size; j++) {
+			img->setPixelSafe(i + x, j + y, Color(255, 255, 255));
+		}
+	}
+}
 void drawForms(Image* img)
 {
 	circleSimple(img, 200, 200);
 	circleSimple(img, 600, 400);
 	spiral(img, 200, 300);
 	spiral(img, 600, 300);
-	triangle(img, 400, 300);
-
+	triangle(img, 370, 170);
+	triangle(img, 370, 370);
+	square(img, 185, 365);
+	square(img ,585,165);
 }
 void dividePixel(Image* img) {
 	int randomColor1 = (((frand()) * 255) % 255);
@@ -209,6 +218,25 @@ void drawSnow(Image* img) {
 	}
 	count = count + 0.001;
 }
+void drawImage(Image* img) {
+	for (float i = 0; i < img->width; i++)
+		for (float j = 0; j < img->height; j++)
+		{
+			//float a = i + sin(j*0.02 + count);
+			//float b = j + sin(i*0.02 + count);
+			Color c = img->getPixel(i, j);
+			Color c1 = Color(0, 255, 0);
+			Color c2 = Color(200,0,0);
+			if(c.r > 200){
+				img->setPixelSafe(i, j, c1);
+			}
+			if (c.g < 50 && c.r < 50 && c.b < 50) {
+				img->setPixelSafe(i, j, c2);
+			}
+			//img->setPixelSafe(a, b, c);
+		}
+	count = count + 0.01;
+}
 //render one frame
 void Application::render(void)
 {
@@ -216,9 +244,7 @@ void Application::render(void)
 	//Create a new Image (or we could create a global one if we want to keep the previous frame)
 	Image framebuffer( window_width, window_height );
 	Image framebuffer2(800, 600);
-
 	if (modo == 1){
-		
 		framebuffer2.fill(Color(0, 0, 0));
 		dividePixel(&framebuffer);
 		showImage(&framebuffer);
@@ -232,6 +258,11 @@ void Application::render(void)
 		framebuffer2.fill(Color(0, 0, 0));
 		drawSnow(&framebuffer);
 		showImage(&framebuffer);
+	}
+	else if (modo == 4) {
+		framebuffer2.fill(Color(0, 0, 0));
+		//drawImage(&framebuffer3);
+		showImage(&framebuffer3);
 	}
 	else if (modo == 5) {
 		circle(&framebuffer2, clicX, clicY);
@@ -276,6 +307,11 @@ void Application::update(double seconds_elapsed)
 		count = 0;
 		modo = 3;
 	}
+	if (keystate[SDL_SCANCODE_4]) //if key 2 is pressed
+	{
+		count = 0;
+		modo = 4;
+	}
 
 
 	//to read mouse position use mouse_position
@@ -304,7 +340,10 @@ void Application::onMouseButtonDown( SDL_MouseButtonEvent event )
 {
 	if (event.button == SDL_BUTTON_LEFT) //LEFT mouse pressed
 	{
-		if (modo == 3) {
+		if (modo == 4) {
+			drawImage(&framebuffer3);
+		}
+		else if (modo == 3){
 			if (size < 0) {
 				size = 0;
 			}
@@ -314,9 +353,6 @@ void Application::onMouseButtonDown( SDL_MouseButtonEvent event )
 			if (size == 0) {
 				size = size + 1000;
 			}
-			
-			
-			
 		}
 		else {
 			clicX = mouse_position.x;
@@ -347,6 +383,8 @@ void Application::start()
 	for (int i = 0; i < size; i++) {
 		randoms[i] = rand();
 	}
+	framebuffer3.loadTGA("starnight.tga");
+	framebuffer3.flipY();
 	std::cout << "launching loop..." << std::endl;
 	launchLoop(this);
 }
