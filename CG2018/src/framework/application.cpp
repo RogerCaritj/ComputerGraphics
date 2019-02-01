@@ -2,17 +2,24 @@
 #include "utils.h"
 #include "image.h"
 
-int modo = 0;
-int changeRoute = 0;
-float count = 0;
-int size = 1000;
-float r = rand();
-int *arrayX = new int[size];
-int *arrayY = new int[size];
-int *randoms = new int[size];
-int clicX = 0;
-int clicY = 0;
-Image framebuffer3(800, 600);
+Teneis que implementar el algoritmo de pintado de lineas, circulos y rellenado de triangulos.
+
+//Debeis implementar los siguientes métodos de la clase Image :
+//	void drawLine(int x0, int y0, int x1, int y1, Color & c);
+//	void drawCircle(int x, int y, int r, Color & c, bool fill);
+//	void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, Color & c, bool fill);
+//Para las lineas usad DDA, si al final teneis tiempo y quereis probad de implementar el algoritmo de bresenham(es mucho mas rapido) mejor.
+//Si programais bresenham aseguraos de que las lineas de bresenham funcionan en todos los octantes.
+//Permitid al usuario poder clickar en la pantalla e ir añadiendo nuevos puntos(tanto para lineas, 
+//como para circulos y triangulos), no es valido que los valores de los vertices de las primitivas ya vengan definidos por codigo.
+//Las primitivas tienen que poderse pintar sobre la imagen que ya hay pintada, de manera que el usuario pueda pintar un circulo, 
+//luego una linea, luego un triangulo, luego otro circulo, y se vea el resultado con todas ellas pintadas, como en cualquier aplicacion de 
+//dibujo(no vale ir borrando el framebuffer cada vez, intentad crear un framebuffer global donde vayais acumulando las primitivas).
+//Permitir al usuario elegir qué figura pintar usando el teclado(p.e: 1. DDA, 2. Bresenham, 3. Circulos, 4. Triangulos) y tratad que no haya 
+//que hacer combinaciones raras de teclado para completar las figuras, que baste con hacer dos clicks en la pantalla para definir una linea, 
+//dos para definir un circulo(primero centro, segundo borde del circulo) o tres para un triangulo.
+
+int mode = 0;
 
 Application::Application(const char* caption, int width, int height)
 {
@@ -36,217 +43,102 @@ void Application::init(void)
 
 	//here add your init stuff
 }
-void bigerPixel(Image* img)
-{
-	int randomColor1 = (((frand()) * 255) % 255);
-	int randomColor2 = (((frand()) * 255) % 255);
-	int randomColor3 = (((frand()) * 255) % 255);
-	for(int x = 380; x<420; x++)
-		for (int y = 280; y < 320; y++) {
-			img->setPixelSafe(x, y, Color(randomColor1, randomColor2, randomColor3)); //random color
-		}
-}
-void spiral(Image* img, float x, float y) {
-	float angle = 0.0f;
 
-	// Space between the spirals
-	int a = 2, b = 2;
-	float x1, y1;
-	for (int i = 0; i < 150; i = i++)
+//Draw a line using DDA Algorithm
+void drawLine(Image img ,int x0, int y0, int x1, int y1, Color & c) {
+	
+	//DDA Algorithm
+	float x = 0, y = 0;
+	float dx, dy;
+	int steps;
+
+	dx = x1 - x0; //difference of x
+	dy = y1 - y0; //difference of y
+	x = x0 + sgn(x0)*0.5; //to see if the lines are going down or up (negative of positive)
+	y = y0 + sgn(x0)*0.5; 
+	
+	if (abs(dx) > abs(dy))
+		steps = abs(dx); //calculate the number of iterations to paint the pixels
+	else
+		steps = abs(dy);
+
+	float Xincr = dx / (float)steps; //increment for x in each pixel
+	float Yincr = dy / (float)steps; //increment for y in each pixel
+
+	for (int v = 0; v < steps; v++)
 	{
-		angle = 0.1 * i;
-		x1 = (a + b * angle) * cos(angle);
-		y1 = (a + b * angle) * sin(angle);
-		img->setPixelSafe(x1 + x , y1 + y, Color(255, 255, 255));
+		x = x + Xincr; //paint each pixel every Xincr
+		y = y + Yincr; //paint each pixel every Yincr
+		setPixelSafe(round(x), round(y), c);
 	}
 }
 
-void circle(Image* img, int posX, int posY) {
-	float radius1 = 100 * count; // radius for the big circle
-	float radius2 = 50 * count; // radius for the small cirle
+//Draw a circle given position and radious
+void drawCircle(Image img, int x, int y, int r, Color & c, bool fill) {
+	
+	int x, y, v;
 
-	for (int angle = 0; angle < 360; angle += 1) {
-		// calculate x and y by using parametic formulas of each circle
-		int x1 = (radius1 * cos(angle));
-		int y1 = (radius1 * sin(angle));
-		int x2 = (radius2 * cos(angle));
-		int y2 = (radius2 * sin(angle));
-
-		// moving cordinates toward center of the display for each circle
-		int cx1 = posX + x1;
-		int cy1 = posY + y1;
-		int cx2 = posX + x2;
-		int cy2 = posY + y2;
-		
-		// degradate the color until it disapears
-		int colorChanging1 = 255 - count * 250;
-		int colorChanging2 = 255 - (count - 0.15) * 200;
-
-		if (colorChanging1 <= 0) {
-			colorChanging1 = 0;
+	x1 = 0;
+	y1 = r;
+	v = 1 - r;
+	setPixel(x, y, c); //paint the center point of the circle
+	while (y > x) {
+		if (v < 0) {
+			v = v + 2 * x + 3;
+			x++;
 		}
-		if (colorChanging2 <= 0) {
-			colorChanging2 = 0;
+		else {
+			v = v + 2 * (x - y) + 5;
+			x++;
+			y--;
 		}
+		//Solve the problem of drawing in each octant
+		setPixelSafe(x, y, c);
+		setPixelSafe(x + x1, y + y1, c); 
+		setPixelSafe(x - x1, y + y1, c);
+		setPixelSafe(x + x1, y - y1, c);
+		setPixelSafe(x - x1, y - y1, c);
+		setPixelSafe(x + y1, y + x1, c);
+		setPixelSafe(x - y1, y + x1, c);
+		setPixelSafe(x + y1, y - x1, c);
+		setPixelSafe(x - y1, y - x1, c);
 
-		// character which made the circle
-		img->setPixelSafe(cx1, cy1, Color(colorChanging1, 0, 0));
-		if (count > 0.15){
-			img->setPixelSafe(cx2, cy2, Color(colorChanging2, 0, 0));
-		}
-	}
-	count = count + 0.01;
-}
-void triangle(Image* img, int x, int y) {
-	const int SIZE = 35;
-	for (int y1 = 0; y1 <= SIZE; ++y1) {
-		for (int x1 = 0; x1 <= SIZE * 2; ++x1) {
-			if (abs(x1 - SIZE) < (y1 + 1)) {
-				img->setPixelSafe(x1 + x, y1 + y, Color(255, 255, 255));
+		if (fill == true) {								
+			for (int i = -x; i < x; i++) {				
+				for (int j = -y; j < y; j++) {
+					setPixelSafe(x + i, y + j, c);
+				}
+			}
+			for (int i = -y; i < y; i++) {
+				for (int j = -x; j < x; j++)
+					setPixelSafe(x + i, y + j, c);
 			}
 		}
 	}
 }
-void circleSimple(Image* img, int posX, int posY) {
-	float radius = 25; // radius for the big circle
 
-	for (int angle = 0; angle < 360; angle += 1) {
-		// calculate x and y by using parametic formulas of each circle
-		int x = (radius * cos(angle));
-		int y = (radius * sin(angle));
+//Draw a triangle given 3 dots
+void drawTriangle(Image img, int x0, int y0, int x1, int y1, int x2, int y2, Color & c, bool fill) {
 
-		// moving cordinates toward center of the display for each circle
-		int cx = posX + x;
-		int cy = posY + y;
-
-		// character which made the circle
-		img->setPixelSafe(cx, cy, Color(255, 255, 255));
+	//Draw the triangle
+	drawLine(img, x0, y0, x1, y1, c);
+	drawLine(img, x1, y1, x2, y2, c);
+	drawLine(img, x2, y2, x0, y0, c);
+	if (fill == true) {
+		//Fill inside the triangle
 	}
-}
-void square(Image* img, int x, int y) {
-	int size = 40;
-	for (int i = 0; i < size; i++) {
-		for (int j = 0; j < size; j++) {
-			img->setPixelSafe(i + x, j + y, Color(255, 255, 255));
-		}
-	}
-}
-void drawForms(Image* img)
-{
-	circleSimple(img, 200, 200);
-	circleSimple(img, 600, 400);
-	spiral(img, 200, 300);
-	spiral(img, 600, 300);
-	triangle(img, 370, 170);
-	triangle(img, 370, 370);
-	square(img, 185, 365);
-	square(img ,585,165);
-}
-void dividePixel(Image* img) {
-	int randomColor1 = (((frand()) * 255) % 255);
-	int randomColor2 = (((frand()) * 255) % 255);
-	int randomColor3 = (((frand()) * 255) % 255);
-
-		//Down left
-		for (int x = 380; x < 400; x++)
-			for (int y = 280; y < 300; y++) {
-				if (changeRoute == 1) {
-					for (int z = 180; z < 201; z++) {
-						img->setPixelSafe(z + 20 + 40 * -sin(count + 1.45), y + 100*cos(3*count), Color(randomColor1, randomColor2, randomColor3)); //random color
-					}
-				}
-				else {
-					img->setPixelSafe(x - count * 40, y, Color(randomColor1, randomColor2, randomColor3)); //random color
-				}
-			}
-		//Down right
-		for (int x = 400; x < 420; x++)
-			for (int y = 280; y < 300; y++) {
-				if (changeRoute == 1) {
-					for (int z = 80; z < 101; z++) {
-						img->setPixelSafe(x, z + 20 + 40 * -sin(count + 1.45), Color(randomColor1, randomColor2, randomColor3)); //random color
-					}
-				}
-				else {
-					img->setPixelSafe(x, y - count * 40, Color(randomColor1, randomColor2, randomColor3)); //random color
-				}
-			}
-		//Up left
-		for (int x = 380; x < 400; x++)
-			for (int y = 300; y < 320; y++) {
-				if (changeRoute == 1) {
-					for (int z = 480; z < 501; z++) {
-						img->setPixelSafe(x, z + 20 + 40 * sin(count + 1.45), Color(randomColor1, randomColor2, randomColor3)); //random color
-					}
-				}
-				else {
-					img->setPixelSafe(x , y + count * 40, Color(randomColor1, randomColor2, randomColor3)); //random color
-				}
-			}
-		//Up right
-		for (int x = 400; x < 420; x++)
-			for (int y = 300; y < 320; y++) {
-				if (x + count * 40 > 600) {
-					changeRoute = 1;
-				}
-				if (changeRoute == 1) {
-					for (int z = 580; z < 601; z++) {
-						img->setPixelSafe(z + 20 + 40 * sin(count + 1.45), y + 100*-cos(3 * count), Color(randomColor1, randomColor2, randomColor3)); //random color
-					}
-				}
-				else {
-					img->setPixelSafe(x + count * 40, y, Color(randomColor1, randomColor2, randomColor3)); //random color
-				}
-			}
-		count = count + 0.05;
+	
 }
 
-void drawSnow(Image* img) {
-	for (int i = 0; i < size; i++) {
-		int x1 = arrayX[i] + sin(count * (randoms[i] % 10 + 3)) * 20;
-		int x2 = arrayX[i] + sin(count * (randoms[i] % 10 + 3)) * 20 + 1;
-		int y1 = arrayY[i] - count * (arrayX[i] % 40) + 3;
-		int y2 = arrayY[i] - count * (arrayX[i] % 40) + 3 + 1;
-		if (y1 < 0) {
-			y1 = y1 + 600;
-			y2 = y2 + 600;
-		}
-		img->setPixelSafe(x1, y1 , Color(255, 255, 255));
-		img->setPixelSafe(x2, y1, Color(255, 255, 255)); 
-		img->setPixelSafe(x1, y2, Color(255, 255, 255)); 
-		img->setPixelSafe(x2, y2, Color(255, 255, 255)); 
-	}
-	count = count + 0.001;
-}
-void drawImage(Image* img) {
-	for (float i = 0; i < img->width; i++)
-		for (float j = 0; j < img->height; j++)
-		{
-			//float a = i + sin(j*0.02 + count);
-			//float b = j + sin(i*0.02 + count);
-			Color c = img->getPixel(i, j);
-			Color c1 = Color(0, 255, 0);
-			Color c2 = Color(200,0,0);
-			if(c.r > 200){
-				img->setPixelSafe(i, j, c1);
-			}
-			if (c.g < 50 && c.r < 50 && c.b < 50) {
-				img->setPixelSafe(i, j, c2);
-			}
-			//img->setPixelSafe(a, b, c);
-		}
-	count = count + 0.01;
-}
 //render one frame
 void Application::render(void)
 {
 
 	//Create a new Image (or we could create a global one if we want to keep the previous frame)
 	Image framebuffer( window_width, window_height );
-	Image framebuffer2(800, 600);
 	if (modo == 1){
-		framebuffer2.fill(Color(0, 0, 0));
-		dividePixel(&framebuffer);
+		framebuffer.fill(Color(0, 0, 0));
+		drawLine(&framebuffer, 0, 0, 500, 500, Color(255, 255, 255));
 		showImage(&framebuffer);
 	}
 	else if (modo == 2) {
@@ -286,31 +178,23 @@ void Application::update(double seconds_elapsed)
 	//to see all the keycodes: https://wiki.libsdl.org/SDL_Keycode
 	if (keystate[SDL_SCANCODE_SPACE]) //if key space is pressed
 	{
-		count = 0;
-		changeRoute = 0;
-		modo = 0;
-		
+		mode = 0;
 	}
 	if (keystate[SDL_SCANCODE_1]) //if key 1 is pressed
 	{
-		count = 0;
-		changeRoute = 0;
-		modo = 1;
+		mode = 1;
 	}
 	if (keystate[SDL_SCANCODE_2]) //if key 2 is pressed
 	{
-		count = 0;
-		modo = 2;
+		mode = 2;
 	}
 	if (keystate[SDL_SCANCODE_3]) //if key 2 is pressed
 	{
-		count = 0;
-		modo = 3;
+		mode = 3;
 	}
 	if (keystate[SDL_SCANCODE_4]) //if key 2 is pressed
 	{
-		count = 0;
-		modo = 4;
+		mode = 4;
 	}
 
 
@@ -340,26 +224,7 @@ void Application::onMouseButtonDown( SDL_MouseButtonEvent event )
 {
 	if (event.button == SDL_BUTTON_LEFT) //LEFT mouse pressed
 	{
-		if (modo == 4) {
-			drawImage(&framebuffer3);
-		}
-		else if (modo == 3){
-			if (size < 0) {
-				size = 0;
-			}
-			else {
-				size = size - 100;
-			}
-			if (size == 0) {
-				size = size + 1000;
-			}
-		}
-		else {
-			clicX = mouse_position.x;
-			clicY = mouse_position.y;
-			count = 0;
-			modo = 5;
-		}
+		
 	}
 }
 
@@ -374,17 +239,6 @@ void Application::onMouseButtonUp( SDL_MouseButtonEvent event )
 //when the app starts
 void Application::start()
 {
-	for (int i = 0; i < size; i++) {
-		arrayX[i] = (rand() % 800);
-	}
-	for (int i = 0; i < size; i++) {
-		arrayY[i] = (rand() % 600);
-	}
-	for (int i = 0; i < size; i++) {
-		randoms[i] = rand();
-	}
-	framebuffer3.loadTGA("starnight.tga");
-	framebuffer3.flipY();
 	std::cout << "launching loop..." << std::endl;
 	launchLoop(this);
 }
