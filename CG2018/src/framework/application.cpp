@@ -1,6 +1,9 @@
 #include "application.h"
 #include "utils.h"
 #include "image.h"
+#include <time.h>
+#include <tuple>
+#include <windows.h>
 
 int modo = 0;
 int changeRoute = 0;
@@ -12,7 +15,10 @@ int *arrayY = new int[size];
 int *randoms = new int[size];
 int clicX = 0;
 int clicY = 0;
+int prev_state = 0;
 Image framebuffer3(800, 600);
+Image framebuffer4(800, 600);
+Image framebuffer7(800, 600);
 
 Application::Application(const char* caption, int width, int height)
 {
@@ -218,6 +224,49 @@ void drawSnow(Image* img) {
 	}
 	count = count + 0.001;
 }
+
+void altereImage(Image& framebuffer)
+{
+	for (unsigned int i = 1; i < framebuffer.width - 1; i += 1)
+		for (unsigned int j = 1; j < framebuffer.height - 1; j += 1)
+		{
+			int b = framebuffer.getPixel(i, j).b +
+				framebuffer.getPixel(i - 1, j).b +
+				framebuffer.getPixel(i + 1, j).b +
+				framebuffer.getPixel(i, j + 1).b +
+				framebuffer.getPixel(i, j - 1).b +
+				framebuffer.getPixel(i + 1, j + 1).b +
+				framebuffer.getPixel(i + 1, j - 1).b +
+				framebuffer.getPixel(i - 1, j + 1).b +
+				framebuffer.getPixel(i - 1, j - 1).b,
+
+				g = framebuffer.getPixel(i, j).g +
+				framebuffer.getPixel(i - 1, j).g +
+				framebuffer.getPixel(i + 1, j).g +
+				framebuffer.getPixel(i, j + 1).g +
+				framebuffer.getPixel(i, j - 1).g +
+				framebuffer.getPixel(i + 1, j + 1).g +
+				framebuffer.getPixel(i + 1, j - 1).g +
+				framebuffer.getPixel(i - 1, j + 1).g +
+				framebuffer.getPixel(i - 1, j - 1).g,
+
+				r = framebuffer.getPixel(i, j).r +
+				framebuffer.getPixel(i - 1, j).r +
+				framebuffer.getPixel(i + 1, j).r +
+				framebuffer.getPixel(i, j + 1).r +
+				framebuffer.getPixel(i, j - 1).r +
+				framebuffer.getPixel(i + 1, j + 1).r +
+				framebuffer.getPixel(i + 1, j - 1).r +
+				framebuffer.getPixel(i - 1, j + 1).r +
+				framebuffer.getPixel(i - 1, j - 1).r;
+
+			b /= 9.0; g /= 9.0; r /= 9.0;
+
+			framebuffer.setPixel(i, j, Color(r, g, b));
+		}
+	//framebuffer.saveTGA("bubblesE.tga");
+}
+
 void drawImage(Image* img) {
 	for (float i = 0; i < img->width; i++)
 		for (float j = 0; j < img->height; j++)
@@ -237,10 +286,130 @@ void drawImage(Image* img) {
 		}
 	count = count + 0.01;
 }
+void setBackgroundColor(Image& im, Color c)
+{
+	for (unsigned int x = 0; x < im.width; x++)
+		for (unsigned int y = 0; y < im.height; y++)
+			im.setPixel(x, y, c);
+}
+// only guaranteed to work on horizontal and vertical lines
+void drawLine(Image& framebuffer, unsigned int xi, unsigned int yi, unsigned int xf, unsigned int yf, Color c)
+{
+	int i = 0, j = 0;
+
+	while (xi + i != xf || yi + j != yf)
+	{
+		framebuffer.setPixel(xi + i, yi + j, c);
+
+		if (xf > xi + i) i++; else if (xf < xi + i) i--;
+		if (yf > yi + j) j++; else if (yf < yi + j) j--;
+	}
+}
+
+std::vector< std::tuple< unsigned int, unsigned int > > getDrawablePixels(Image& framebuffer, unsigned int amount, unsigned int length)
+{
+	unsigned int workableWidth = framebuffer.width - 2 * length,
+		workableHeigth = framebuffer.height - 2 * length;
+
+	std::vector< std::tuple< unsigned int, unsigned int > > positions;
+
+	positions.push_back(std::make_tuple(length + rand() % workableWidth, length + rand() % workableHeigth));
+
+	while (positions.size() != amount) // fill in l random distinct positions
+	{
+		std::tuple< unsigned int, unsigned int > nextPixel = std::make_tuple(length + rand() % workableWidth, length + rand() % workableHeigth);
+
+		// position doesn't exist in the vector
+		if (std::find(positions.begin(), positions.end(), nextPixel) == positions.end())
+			positions.push_back(nextPixel);
+	}
+
+	return positions;
+}
+
+void drawSquareStartingOnPixel(Image& framebuffer, unsigned int xi, unsigned int yi, unsigned int length, bool onlyEdges)
+{
+	Color c(rand() % 255, rand() % 255, rand() % 255);
+
+	if (onlyEdges)
+	{
+		drawLine(framebuffer, xi, yi, xi + length, yi, c);
+		drawLine(framebuffer, xi, yi + length, xi + length, yi + length, c);
+		drawLine(framebuffer, xi, yi, xi, yi + length, c);
+		drawLine(framebuffer, xi + length, yi, xi + length, yi + length, c);
+	}
+
+	else
+		for (unsigned int i = 0; i < length; i++)
+			for (unsigned int j = 0; j < length; j++)
+				framebuffer.setPixel(xi + i, yi + j, c);
+}
+
+void drawSquaresOnImage(Image& framebuffer, unsigned int amount, unsigned int length, bool onlyEdges)
+{
+	std::vector< std::tuple< unsigned int, unsigned int > > positions = getDrawablePixels(framebuffer, amount, length);
+
+	for (std::tuple< unsigned int, unsigned int > p : positions)
+		drawSquareStartingOnPixel(framebuffer, std::get<0>(p), std::get<1>(p), rand() % length, onlyEdges);
+}
+
+void drawCircleCenteredOnPixel(Image& framebuffer, unsigned int x, unsigned int y, unsigned int radius, bool onlyEdges)
+{
+	Color c(rand() % 255, rand() % 255, rand() % 255);
+
+	for (unsigned int n = onlyEdges ? radius : 1; n <= radius; n++)
+		for (unsigned int i = 0; i < (unsigned int)ceil(PI * n * n); i++)
+			framebuffer.setPixel((unsigned int)(x + n * cos(i)), (unsigned int)(y + n * sin(i)), c);
+}
+
+void drawCirclesOnImage(Image& framebuffer, unsigned int amount, unsigned int radius, bool onlyEdges)
+{
+	std::vector< std::tuple< unsigned int, unsigned int > > positions = getDrawablePixels(framebuffer, amount, (unsigned int)ceil(sqrt(8 * radius * radius) / 2.0));
+
+	for (std::tuple< unsigned int, unsigned int > p : positions)
+		drawCircleCenteredOnPixel(framebuffer, std::get<0>(p), std::get<1>(p), rand() % radius, onlyEdges);
+}
+
+
+void pattern1(Image& framebuffer, bool onlyEdges)
+{
+	Color c(rand() % 255, rand() % 255, rand() % 255);
+
+	unsigned int low_left_x = ceil(framebuffer.width * 0.2),
+		low_left_y = ceil(framebuffer.height * 0.2),
+		low_right_x = ceil(framebuffer.width * 0.8),
+		low_right_y = ceil(framebuffer.height * 0.2),
+
+		top_left_x = ceil(framebuffer.width * 0.2),
+		top_left_y = ceil(framebuffer.height * 0.8),
+		top_right_x = ceil(framebuffer.width * 0.8),
+		top_right_y = ceil(framebuffer.height * 0.8);
+
+	drawLine(framebuffer, low_left_x, low_left_y, low_right_x, low_right_y, c);
+	drawLine(framebuffer, low_left_x, low_left_y, top_left_x, top_left_y, c);
+	drawLine(framebuffer, top_right_x, top_right_y, top_left_x, top_left_y, c);
+	drawLine(framebuffer, top_right_x, top_right_y, low_right_x, low_right_y, c);
+
+	drawCircleCenteredOnPixel(framebuffer, low_left_x, low_left_y, 50, onlyEdges);
+	drawCircleCenteredOnPixel(framebuffer, low_right_x, low_right_y, 50, onlyEdges);
+	drawCircleCenteredOnPixel(framebuffer, top_left_x, top_left_y, 50, onlyEdges);
+	drawCircleCenteredOnPixel(framebuffer, top_right_x, top_right_y, 50, onlyEdges);
+
+	drawCircleCenteredOnPixel(framebuffer, (unsigned int)ceil(framebuffer.width / 2.0), (unsigned int)ceil(framebuffer.height / 2.0), 160, true);
+
+	drawLine(framebuffer,
+		(unsigned int)ceil(framebuffer.width / 2.0),
+		(unsigned int)ceil(framebuffer.height / 2.0),
+		(unsigned int)ceil(framebuffer.width / 2.0 + 160 * cos(time(NULL))),
+		(unsigned int)ceil(framebuffer.height / 2.0 + 160 * sin(time(NULL))), c);
+}
+int numberOfRandomFigures = 3;
+bool onlyEdges = true;
+
+Image framebuffer8(1080, 1920);
 //render one frame
 void Application::render(void)
 {
-
 	//Create a new Image (or we could create a global one if we want to keep the previous frame)
 	Image framebuffer( window_width, window_height );
 	Image framebuffer2(800, 600);
@@ -248,25 +417,55 @@ void Application::render(void)
 		framebuffer2.fill(Color(0, 0, 0));
 		dividePixel(&framebuffer);
 		showImage(&framebuffer);
+		prev_state = 1;
 	}
 	else if (modo == 2) {
-		spiral(&framebuffer, 400, 300);
+		/*spiral(&framebuffer, 400, 300);
 		drawForms(&framebuffer);
-		showImage(&framebuffer);
+		showImage(&framebuffer);*/
+		framebuffer2.fill(Color(0, 0, 0));
+		setBackgroundColor(framebuffer2, Color::BLACK);
+		drawCirclesOnImage(framebuffer2, numberOfRandomFigures, 150, onlyEdges);
+		drawSquaresOnImage(framebuffer2, numberOfRandomFigures, 150, onlyEdges);
+		showImage(&framebuffer2);
+		Sleep(100);
+		prev_state = 2;
+
 	}
 	else if (modo == 3) {
 		framebuffer2.fill(Color(0, 0, 0));
 		drawSnow(&framebuffer);
 		showImage(&framebuffer);
+		prev_state = 3;
 	}
 	else if (modo == 4) {
 		framebuffer2.fill(Color(0, 0, 0));
 		//drawImage(&framebuffer3);
 		showImage(&framebuffer3);
+		prev_state = 4;
+
 	}
 	else if (modo == 5) {
 		circle(&framebuffer2, clicX, clicY);
 		showImage(&framebuffer2);
+		prev_state = 5;
+	}
+	else if (modo == 6) {
+		if (prev_state != 6) {
+			framebuffer4.loadTGA("bubbles.tga");
+		}
+		showImage(&framebuffer4);
+		prev_state = 6;
+	}
+	else if (modo == 7) {
+		setBackgroundColor(framebuffer7, Color::BLACK);
+		pattern1(framebuffer7, onlyEdges);
+		showImage(&framebuffer7);
+		prev_state = 7;
+	}
+	else if (modo == 8) {
+		showImage(&framebuffer8);
+		prev_state = 8;
 	}
 	else{
 		framebuffer2.fill(Color(0, 0, 0));
@@ -289,7 +488,7 @@ void Application::update(double seconds_elapsed)
 		count = 0;
 		changeRoute = 0;
 		modo = 0;
-		
+
 	}
 	if (keystate[SDL_SCANCODE_1]) //if key 1 is pressed
 	{
@@ -312,7 +511,35 @@ void Application::update(double seconds_elapsed)
 		count = 0;
 		modo = 4;
 	}
-
+	if (keystate[SDL_SCANCODE_6]) //if key 2 is pressed
+	{
+		count = 0;
+		modo = 6;
+		altereImage(framebuffer4);
+	}
+	if (keystate[SDL_SCANCODE_7]) //if key 2 is pressed
+	{
+		count = 0;
+		modo = 7;
+	}
+	if (keystate[SDL_SCANCODE_8]) //if key 2 is pressed
+	{
+		count = 0;
+		modo = 8;
+	}
+	if (keystate[SDL_SCANCODE_UP]) {
+		numberOfRandomFigures++;
+	}
+	if (keystate[SDL_SCANCODE_DOWN]) {
+		numberOfRandomFigures--;
+	}
+	if (keystate[SDL_SCANCODE_F]) {
+		onlyEdges = false;
+	}
+	if (keystate[SDL_SCANCODE_U]) {
+		onlyEdges = true;
+	}
+	
 
 	//to read mouse position use mouse_position
 }
@@ -338,12 +565,24 @@ void Application::onKeyUp(SDL_KeyboardEvent event)
 //mouse button event
 void Application::onMouseButtonDown( SDL_MouseButtonEvent event )
 {
-	if (event.button == SDL_BUTTON_LEFT) //LEFT mouse pressed
+	if (modo == 8) // draw circles and squares upon clicking only when in this mode
+	{
+		if (event.button == SDL_BUTTON_LEFT) //left mouse unpressed
+		{
+			drawCircleCenteredOnPixel(framebuffer8, mouse_position.x, mouse_position.y, rand() % 150, onlyEdges);
+		}
+
+		else if (event.button == SDL_BUTTON_RIGHT) //left mouse unpressed
+		{
+			drawSquareStartingOnPixel(framebuffer8, mouse_position.x, mouse_position.y, rand() % 150, onlyEdges);
+		}
+	}
+	else if (event.button == SDL_BUTTON_LEFT) //LEFT mouse pressed
 	{
 		if (modo == 4) {
 			drawImage(&framebuffer3);
 		}
-		else if (modo == 3){
+		else if (modo == 3) {
 			if (size < 0) {
 				size = 0;
 			}
@@ -363,12 +602,9 @@ void Application::onMouseButtonDown( SDL_MouseButtonEvent event )
 	}
 }
 
+// Draw geometric figures: circles with left click and squares with right clicks
 void Application::onMouseButtonUp( SDL_MouseButtonEvent event )
 {
-	if (event.button == SDL_BUTTON_LEFT) //left mouse unpressed
-	{
-
-	}
 }
 
 //when the app starts
