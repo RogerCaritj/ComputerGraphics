@@ -1,122 +1,37 @@
-# Computer Graphics
+﻿Created by: Ever Garcia (NIA 194628, ID U137574) Roger Caritj (NIA 183714 ID U124305) Carlos Bertomeu (NIA 183768,ID U124294)
 
-The framework provided is compatible with all operating systems.
-The recommended C++ IDEs are the following:
+Actions:
 
-* MS Visual Studio 2015 Community edition (Windows)
-* MS Visual Studio 2017 Community edition (Windows)
-* XCode (Mac)
-* Visual Studio Code (Any platform)
-* Qt Open Source (Any platform)
+When you're in any state different from 3, 4 and 6 clicking on the screen will produce a nice bubble effect.
 
-Detailed installation information can be seen below.
+- Press 1 to see an animation where a square is divided into four equal smaller squares that oscillate around the center.
+	Press 1 to restart.
 
-## MS Visual Studio 2015 Community edition (Windows)
+- Press 2 for an animation showing any number of color-changing, randomly located shapes including circles and squares. A new configuration is displayed every second.
+	- Press up (navigation keypad) to increment the number of figures
+	- Press down (navigation keypad) to decrement the number of figures
+	- Press F to switch to a mode in which figures are colored on the inside.
+	- Press U to switch back to only-edges drawing mode.
 
-MS Visual Studio 2015 can be downloaded from [here](https://my.visualstudio.com/Downloads?q=visual%20studio%202015&wt.mc_id=o~msft~vscom~older-downloads). Make sure you select all packages
-related to C++.
+- Press 3 for a snowing animation.
+	- Click left to decrease the amount of snowflakes (there's still a minimum though from where it restarts).
 
-After the installation you just need to open the file *visual.sln* located in the *visual* folder.
+- Press 4 to see a famous painting.
+	- Click left anywhere to change some colors.
 
-## MS Visual Studio 2017 Community edition (Windows)
+- Press 6 for image editing. An image should pop up on the screen, and a blur effect will be applied on it once.
+	- Press 6 (again) to re-apply effect on top of current degradation.
 
-MS Visual Studio 2017 can be downloaded from [here](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&rel=15#).
-Make sure you select all packages related to C++.
+- Press 7 for an animation showing some color-changing shapes including a "clock" spinning around its circumference with a non-straight line as time goes by.
+	- Press F to switch to a mode in which the four circles on the edges of the square are colored on the inside.
+	- Press U to switch back to only-edges drawing mode.
 
-In addition you need to install *CMake* which can be downloaded from [here](https://github.com/Kitware/CMake/releases/download/v3.13.2/cmake-3.13.2-win64-x64.msi).
+- Press 8 for interactive, shape-drawing mode. The size (radius or side length) of the shapes is random, just like their color.
+	- Press left click for circles.
+	- Press right click for squares.
+	- Press F to switch to a mode in which figures are colored on the inside.
+	- Press U to switch back to only-edges drawing mode.
 
-Once you have all required software go to this file folder and run this on a windows console:
+You can switch between actions as you please and the changes are saved in some modes.
 
-```console
-mkdir build
-cd build
-cmake -G "Visual Studio 15" ../.
-```
-
-## XCode (Mac)
-
-You need XCode installed in your system and also Homebrew to install the missing libraries and
-*cmake*. To install Homebrew open a terminal and run this command:
-
-```console
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-```
-
-Continue by installing *cmake* and the missing libraries using this command:
-
-```console
-brew install cmake
-brew install sdl2
-```
-
-Finally create the XCode project by going to this file folder and run these commands:
-
-```console
-mkdir build && cd build
-cmake -G "Xcode" ..
-```
-
-The XCode project will be located into the *build* directory.
-
-If this process leads to cmake errors, run this command an try again:
-
-```console
-sudo xcode-select --reset
-```
-
-## Visual Studio Code (Any platform)
-
-If you need a more light weight IDEs which can be used in any platform (included Linux), this is
-your better option.
-
-Visual Studio Code can be downloaded for each platform in [here](https://code.visualstudio.com/download).
-
-### Requirements on Windows
-
-Windows do not need any further requirement.
-
-### Requirements on Mac
-
-**It is not recommended since there is a bug in one the the needed extensions, that prevents
-starting the debugger, use XCode instead.**
-
-Once the ide is installed, on **Mac** it is necessary to first open the application and and press
-**Cmd+Shift+P**, then type *"shell command"* and select *"Shell Command: Install 'code' command in
-PATH"*. Then it is also necessary to install the following pakcages:
-
-Homebrew to install the missing libraries and
-*cmake*. To install Homebrew open a terminal and run this command:
-
-```console
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-brew install cmake
-brew install sdl2
-```
-
-### Requirements on Linux
-
-If you are using **linux** you have to install the following packages:
-
-```console
-sudo apt-get install -y libsdl2-dev libglew-dev freeglut3-dev
-```
-
-### Configuring VSCode
-
-After the VSCode and the requirements for each platform are installed, the following extensions
-are needed to work with C++ code:
-
-```console
-code --install-extension ms-vscode.cpptools
-code --install-extension twxs.cmake
-code --install-extension vector-of-bool.cmake-tools
-code --install-extension austin.code-gnu-global
-```
-
-Finally open the folder containing this file.
-
-## Qt Open Source (Any platform)
-
-Qt Open Source can be downloaded from [here](https://www.qt.io/download-qt-installer). Once it is
-installed you have to install the same packages that you seen in the previous section. After that
-you have to create a new cmake project.
+Enjoy!
