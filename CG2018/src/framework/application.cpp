@@ -28,6 +28,8 @@ Vector2 origin;
 Vector2 end;
 Vector2 vertex;
 
+int lineInfo[800][1][1];
+
 struct sCelda {
 	int minx;
 	int maxx;
@@ -82,7 +84,10 @@ void drawLine(int x0, int y0, int x1, int y1, Color c) {
 	{
 		framebuffer.setPixelSafe(floor(x), floor(y), c);
 		x = x + Xincr; //paint each pixel every Xincr
-		y = y + Yincr; //paint each pixel every Yincr		
+		y = y + Yincr; //paint each pixel every Yincr
+		if (mode = 5) {
+
+		}
 	}
 }
 
@@ -170,13 +175,15 @@ void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, Color c, bool 
 	else {
 		std::vector<sCelda> table;
 		table.resize(framebuffer.height);
+		int maxY = max(y0, y1, y2);
+		int minY = min(y0, y1, y2);
 		//inicializar tabla
 		for (int i = 0; i < table.size(); i++)
 		{
 			table[i].minx = 100000; //very big number
 			table[i].maxx = -100000; //very small number
 		}
-		for (int j = 0; j < table.size(); j++)
+		for (int j = minY; j < maxY; j++)
 		{
 			if (table[j].maxx < x0) table[j].maxx = x0;
 			if (table[j].minx > x0) table[j].minx = x0;
@@ -185,19 +192,14 @@ void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, Color c, bool 
 			if (table[j].maxx < x2) table[j].maxx = x2;
 			if (table[j].minx > x2) table[j].minx = x2;
 		}
-		for (int j = 0; j < table.size(); j++) {
-			if (table[j].maxx > table[j].minx) {
-				for (int i = table[j].minx; i <= table[j].maxx; i++) {
-					framebuffer.setPixelSafe(i, j, c);
-				}
-				//drawLine(table[j].minx, j, table[j].maxx, j, c);
+		for (int j = minY; j < maxY; j++) {
+			drawLine(table[j].minx, j, table[j].maxx, j, c);
 			}
 		}
 	}
 
 	//… raster lines algorithm
 	//… filling triangle algorithm
-}
 
 //void drawTriangle(Image* img, int x0, int y0, int x1, int y1, int x2, int y2, Color c, bool fill) {
 //	//int aux1,aux2;
