@@ -2,7 +2,7 @@
 #include "utils.h"
 #include "image.h"
 
-Teneis que implementar el algoritmo de pintado de lineas, circulos y rellenado de triangulos.
+//Teneis que implementar el algoritmo de pintado de lineas, circulos y rellenado de triangulos.
 
 //Debeis implementar los siguientes métodos de la clase Image :
 //	void drawLine(int x0, int y0, int x1, int y1, Color & c);
@@ -20,6 +20,18 @@ Teneis que implementar el algoritmo de pintado de lineas, circulos y rellenado d
 //dos para definir un circulo(primero centro, segundo borde del circulo) o tres para un triangulo.
 
 int mode = 0;
+int count;
+
+Image framebuffer(800, 800);
+
+Vector2 origin;
+Vector2 end;
+Vector2 vertex;
+
+struct sCelda {
+	int minx;
+	int maxx;
+};
 
 Application::Application(const char* caption, int width, int height)
 {
@@ -45,124 +57,235 @@ void Application::init(void)
 }
 
 //Draw a line using DDA Algorithm
-void drawLine(Image img ,int x0, int y0, int x1, int y1, Color & c) {
+void drawLine(int x0, int y0, int x1, int y1, Color c) {
 	
 	//DDA Algorithm
 	float x = 0, y = 0;
 	float dx, dy;
-	int steps;
+	float steps;
 
 	dx = x1 - x0; //difference of x
 	dy = y1 - y0; //difference of y
 	x = x0 + sgn(x0)*0.5; //to see if the lines are going down or up (negative of positive)
 	y = y0 + sgn(x0)*0.5; 
 	
-	if (abs(dx) > abs(dy))
+	
+	if (abs(dx) >= abs(dy))
 		steps = abs(dx); //calculate the number of iterations to paint the pixels
 	else
 		steps = abs(dy);
 
-	float Xincr = dx / (float)steps; //increment for x in each pixel
-	float Yincr = dy / (float)steps; //increment for y in each pixel
+	float Xincr = dx / steps; //increment for x in each pixel
+	float Yincr = dy / steps; //increment for y in each pixel
 
-	for (int v = 0; v < steps; v++)
+	for (int v = 0; v <= steps; v++)
 	{
+		framebuffer.setPixelSafe(floor(x), floor(y), c);
 		x = x + Xincr; //paint each pixel every Xincr
-		y = y + Yincr; //paint each pixel every Yincr
-		setPixelSafe(round(x), round(y), c);
+		y = y + Yincr; //paint each pixel every Yincr		
 	}
 }
 
 //Draw a circle given position and radious
-void drawCircle(Image img, int x, int y, int r, Color & c, bool fill) {
+void drawCircle(Image* img, int x, int y, int r, Color c, bool fill) {
 	
-	int x, y, v;
+	int x1, y1, v;
 
 	x1 = 0;
 	y1 = r;
 	v = 1 - r;
-	setPixel(x, y, c); //paint the center point of the circle
-	while (y > x) {
+
+	while (y1 > x1) {
 		if (v < 0) {
-			v = v + 2 * x + 3;
-			x++;
+			v = v + 2 * x1 + 3;
+			x1++;
 		}
 		else {
-			v = v + 2 * (x - y) + 5;
-			x++;
-			y--;
+			v = v + 2 * (x1 - y1) + 5;
+			x1++;
+			y1--;
 		}
-		//Solve the problem of drawing in each octant
-		setPixelSafe(x, y, c);
-		setPixelSafe(x + x1, y + y1, c); 
-		setPixelSafe(x - x1, y + y1, c);
-		setPixelSafe(x + x1, y - y1, c);
-		setPixelSafe(x - x1, y - y1, c);
-		setPixelSafe(x + y1, y + x1, c);
-		setPixelSafe(x - y1, y + x1, c);
-		setPixelSafe(x + y1, y - x1, c);
-		setPixelSafe(x - y1, y - x1, c);
-
-		if (fill == true) {								
-			for (int i = -x; i < x; i++) {				
-				for (int j = -y; j < y; j++) {
-					setPixelSafe(x + i, y + j, c);
-				}
-			}
-			for (int i = -y; i < y; i++) {
-				for (int j = -x; j < x; j++)
-					setPixelSafe(x + i, y + j, c);
-			}
+		if (fill) {
+			drawLine(x - r, y, x + r, y, c);
+			drawLine(x - x1, y + y1, x + x1, y + y1, c);
+			drawLine(x + x1, y - y1, x - x1, y - y1, c);
+			drawLine(x - y1, y + x1, x + y1, y + x1, c);
+			drawLine(x + y1, y - x1, x - y1, y - x1, c);
+		}
+		else {
+			//Solve the problem of drawing in each octant
+			img->setPixelSafe(x + x1, y + y1, c);
+			img->setPixelSafe(x - x1, y + y1, c);
+			img->setPixelSafe(x - x1, y - y1, c);
+			img->setPixelSafe(x + x1, y - y1, c);
+			img->setPixelSafe(x + y1, y + x1, c);
+			img->setPixelSafe(x - y1, y + x1, c);
+			img->setPixelSafe(x - y1, y - x1, c);
+			img->setPixelSafe(x + y1, y - x1, c);
 		}
 	}
 }
+
+
+//void fillBottonFlatTriangle(Image* img, int x0, int y0, int x1, int y1, int x2, int y2, Color c) {
+//	//Calculate the slope of each side
+//	float slope1 = (x1 - x0) / ((y1 - y0) + 1);
+//	float slope2 = (x2 - x0) / ((y2 - y0) + 1);
+//
+//	float curx1 = x0;
+//	float curx2 = x0;
+//
+//	for (int scanlineY = y0; scanlineY <= y1; scanlineY++) {
+//		drawLine(img, (int)curx1, scanlineY, (int)curx2, scanlineY, c);
+//		curx1 += slope1;
+//		curx2 += slope2;
+//	}
+//}
+//
+//void fillTopFlatTriangle(Image* img, int x0, int y0, int x1, int y1, int x2, int y2, Color c) {
+//	//Calculate the slope of each side
+//	float slope1 = (x2 - x0) / ((y2 - y0));
+//	float slope2 = (x2 - x1) / ((y2 - y1));
+//
+//	float curx1 = x2;
+//	float curx2 = x2;
+//
+//	for (int scanlineY = y2; scanlineY <= y0; scanlineY--) {
+//		drawLine(img, (int)curx1, scanlineY, (int)curx2, scanlineY, c);
+//		curx1 -= slope1;
+//		curx2 -= slope2;
+//	}
+//}
 
 //Draw a triangle given 3 dots
-void drawTriangle(Image img, int x0, int y0, int x1, int y1, int x2, int y2, Color & c, bool fill) {
-
-	//Draw the triangle
-	drawLine(img, x0, y0, x1, y1, c);
-	drawLine(img, x1, y1, x2, y2, c);
-	drawLine(img, x2, y2, x0, y0, c);
-	if (fill == true) {
-		//Fill inside the triangle
+//raster a triangle
+void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, Color c, bool fill)
+{
+	if (!fill) {
+		//Draw the triangle
+		drawLine(x0, y0, x1, y1, c);
+		drawLine(x1, y1, x2, y2, c);
+		drawLine(x2, y2, x0, y0, c);
 	}
-	
+	else {
+		std::vector<sCelda> table;
+		table.resize(framebuffer.height);
+		//inicializar tabla
+		for (int i = 0; i < table.size(); i++)
+		{
+			table[i].minx = 100000; //very big number
+			table[i].maxx = -100000; //very small number
+		}
+		for (int j = 0; j < table.size(); j++)
+		{
+			if (table[j].maxx < x0) table[j].maxx = x0;
+			if (table[j].minx > x0) table[j].minx = x0;
+			if (table[j].maxx < x1) table[j].maxx = x1;
+			if (table[j].minx > x1) table[j].minx = x1;
+			if (table[j].maxx < x2) table[j].maxx = x2;
+			if (table[j].minx > x2) table[j].minx = x2;
+		}
+		for (int j = 0; j < table.size(); j++) {
+			if (table[j].maxx > table[j].minx) {
+				for (int i = table[j].minx; i <= table[j].maxx; i++) {
+					framebuffer.setPixelSafe(i, j, c);
+				}
+				//drawLine(table[j].minx, j, table[j].maxx, j, c);
+			}
+		}
+	}
+
+	//… raster lines algorithm
+	//… filling triangle algorithm
 }
+
+//void drawTriangle(Image* img, int x0, int y0, int x1, int y1, int x2, int y2, Color c, bool fill) {
+//	//int aux1,aux2;
+//	//if (max(y0, y1, y2) == y1) {
+//	//	aux1 = x0;
+//	//	aux2 = y0;
+//	//	x0 = x1;
+//	//	y0 = y1;
+//	//	x1 = aux1;
+//	//	y1 = aux2;
+//	//} else if (max(y0, y1, y2) == y2) {
+//	//	aux1 = x0;
+//	//	aux2 = y0;
+//	//	x0 = x2;
+//	//	y0 = y2;
+//	//	x2 = aux1;
+//	//	y2 = aux2;
+//	//}
+//	//if (min(y0, y1, y2) == y0) {
+//	//	aux1 = x2;
+//	//	aux2 = y2;
+//	//	x2 = x0;
+//	//	y2 = y0;
+//	//	x0 = aux1;
+//	//	y0 = aux2;
+//	//}else if (min(y0, y1, y2) == y1) {
+//	//	aux1 = x2;
+//	//	aux2 = y2;
+//	//	x2 = x1;
+//	//	y2 = y1;
+//	//	x1 = aux1;
+//	//	y1 = aux2;
+//	//}
+//
+//	//Draw the triangle
+//	drawLine(img, x0, y0, x1, y1, c);
+//	drawLine(img, x1, y1, x2, y2, c);
+//	drawLine(img, x2, y2, x0, y0, c);
+//	//if (fill == true) {
+//	//	
+//	//	if (y1 == y2) {
+//	//		fillBottonFlatTriangle(img, x0, y0, x1, y1, x2, y2, c);
+//	//		std::cout<<"Cas1";
+//	//	}
+//	//	else if (y0 == y1) {
+//	//		fillTopFlatTriangle(img, x0, y0, x1, y1, x2, y2, c);
+//	//		std::cout << "Cas2";
+//	//	}
+//	//	else {
+//	//		std::cout << "Cas3";
+//	//		int x4 = (int)(x0 + ((float)(y1 - y0) / (float)(y2 - y0)) * (x2 - x0));
+//	//		int y4 = y1;
+//	//		fillBottonFlatTriangle(img, x0, y0, x1, y1, x2, y2, c);
+//	//		fillTopFlatTriangle(img, x0, y0, x1, y1, x2, y2, c);
+//
+//	//	}
+//
+//	//}
+//
+//	
+//
+//}
 
 //render one frame
 void Application::render(void)
 {
 
 	//Create a new Image (or we could create a global one if we want to keep the previous frame)
-	Image framebuffer( window_width, window_height );
-	if (modo == 1){
-		framebuffer.fill(Color(0, 0, 0));
-		drawLine(&framebuffer, 0, 0, 500, 500, Color(255, 255, 255));
+	
+	if (mode == 1){
 		showImage(&framebuffer);
 	}
-	else if (modo == 2) {
-		spiral(&framebuffer, 400, 300);
-		drawForms(&framebuffer);
+	else if (mode == 2) {
 		showImage(&framebuffer);
 	}
-	else if (modo == 3) {
-		framebuffer2.fill(Color(0, 0, 0));
-		drawSnow(&framebuffer);
+	else if (mode == 3) {
 		showImage(&framebuffer);
 	}
-	else if (modo == 4) {
-		framebuffer2.fill(Color(0, 0, 0));
-		//drawImage(&framebuffer3);
-		showImage(&framebuffer3);
+	else if (mode == 4) {
+		showImage(&framebuffer);
 	}
-	else if (modo == 5) {
-		circle(&framebuffer2, clicX, clicY);
-		showImage(&framebuffer2);
+	else if (mode == 5) {
+
+		showImage(&framebuffer);
 	}
 	else{
-		framebuffer2.fill(Color(0, 0, 0));
-		bigerPixel(&framebuffer);
+
+		framebuffer.fill(Color::BLACK);
 		showImage(&framebuffer);
 	}
 
@@ -178,23 +301,33 @@ void Application::update(double seconds_elapsed)
 	//to see all the keycodes: https://wiki.libsdl.org/SDL_Keycode
 	if (keystate[SDL_SCANCODE_SPACE]) //if key space is pressed
 	{
+		//Clean
 		mode = 0;
 	}
 	if (keystate[SDL_SCANCODE_1]) //if key 1 is pressed
 	{
+		//DrawLine
 		mode = 1;
 	}
 	if (keystate[SDL_SCANCODE_2]) //if key 2 is pressed
 	{
+		//Draw Circle
 		mode = 2;
 	}
-	if (keystate[SDL_SCANCODE_3]) //if key 2 is pressed
+	if (keystate[SDL_SCANCODE_3]) //if key 3 is pressed
 	{
+		//Draw Filled circle
 		mode = 3;
 	}
-	if (keystate[SDL_SCANCODE_4]) //if key 2 is pressed
+	if (keystate[SDL_SCANCODE_4]) //if key 4 is pressed
 	{
+		//Draw Triangle
 		mode = 4;
+	}
+	if (keystate[SDL_SCANCODE_5]) //if key 5 is pressed
+	{
+		//Draw Filled Triangle
+		mode = 5;
 	}
 
 
@@ -232,6 +365,74 @@ void Application::onMouseButtonUp( SDL_MouseButtonEvent event )
 {
 	if (event.button == SDL_BUTTON_LEFT) //left mouse unpressed
 	{
+		//Draw Line mode
+		if (mode == 1) {
+			if (count == 0) {
+				origin = mouse_position;
+			}
+			else if (count == 1) {
+				end = mouse_position;
+				drawLine(origin.x,origin.y,end.x,end.y, Color::RED );
+				count = -1;
+			}
+			count++;
+		}
+		//Draw circle mode
+		if (mode == 2) {
+			if (count == 0) {
+				origin = mouse_position;
+			}
+			else if (count == 1) {
+				end = mouse_position;
+				int r = sqrt(pow(end.x - origin.x, 2) + pow(end.y - origin.y, 2));
+				drawCircle(&framebuffer, origin.x, origin.y, r, Color::BLUE, FALSE);
+				count = -1;
+			}
+			count++;
+		}
+		//Draw Filled circle mode
+		if (mode == 3) {
+			if (count == 0) {
+				origin = mouse_position;
+			}
+			else if (count == 1) {
+				end = mouse_position;
+				int r = sqrt(pow(end.x - origin.x, 2) + pow(end.y - origin.y, 2));
+				drawCircle(&framebuffer, origin.x, origin.y, r, Color::GREEN, TRUE);
+				count = -1;
+			}
+			count++;
+		}
+		//Draw Triangle mode
+		if (mode == 4) {
+			if (count == 0) {
+				origin = mouse_position;
+			}
+			else if (count == 1) {
+				end = mouse_position;
+			}
+			else if (count == 2) {
+				vertex = mouse_position;
+				drawTriangle(origin.x, origin.y, end.x,end.y,vertex.x,vertex.y, Color::YELLOW, FALSE);
+				count = -1;
+			}
+			count++;
+		}
+		//Draw Filled Triangle mode
+		if (mode == 5) {
+			if (count == 0) {
+				origin = mouse_position;
+			}
+			else if (count == 1) {
+				end = mouse_position;
+			}
+			else if (count == 2) {
+				vertex = mouse_position;
+				drawTriangle(origin.x, origin.y, end.x, end.y, vertex.x, vertex.y, Color::PURPLE, TRUE);
+				count = -1;
+			}
+			count++;
+		}
 
 	}
 }

@@ -1,4 +1,9 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(376,5): warning MSB8004: El directorio Intermediate no termina con una barra diagonal final. Esta instancia de compilación agregará la barra diagonal porque es necesaria para que se pueda evaluar correctamente el directorio Intermediate.
+  application.cpp
+f:\roger\uni\3r\compg\computergraphics\cg2018\src\framework\application.cpp(174): warning C4018: '<': no coinciden signed/unsigned
+f:\roger\uni\3r\compg\computergraphics\cg2018\src\framework\application.cpp(179): warning C4018: '<': no coinciden signed/unsigned
+f:\roger\uni\3r\compg\computergraphics\cg2018\src\framework\application.cpp(194): warning C4018: '<': no coinciden signed/unsigned
+application.obj : warning LNK4075: se omite '/EDITANDCONTINUE' debido a la especificación '/INCREMENTAL:NO'
   visual.vcxproj -> F:\Roger\UNI\3r\COMPG\ComputerGraphics\CG2018\visual\visual\..\..\build\ComputerGraphics.exe
   0 archivo(s) copiado(s)
   0 archivo(s) copiado(s)

@@ -18,6 +18,12 @@ void* getGLProcAddress(const char* name)
 	return SDL_GL_GetProcAddress(name);
 }
 
+int sgn(int x) {
+	if (x > 0) return 1;
+	if (x < 0) return -1;
+	return 0;
+}
+
 bool checkGLErrors()
 {
 	GLenum errCode;
