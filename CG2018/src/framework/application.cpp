@@ -62,14 +62,12 @@ void Application::init(void)
 void drawLine(int x0, int y0, int x1, int y1, Color c) {
 	
 	//DDA Algorithm
-	float x = 0, y = 0;
-	float dx, dy;
 	float steps;
 
-	dx = x1 - x0; //difference of x
-	dy = y1 - y0; //difference of y
-	x = x0 + sgn(x0)*0.5; //to see if the lines are going down or up (negative of positive)
-	y = y0 + sgn(x0)*0.5; 
+	float dx = x1 - x0; //difference of x
+	float dy = y1 - y0; //difference of y
+	float x = x0 + sgn(x0)*0.5; //to see if the lines are going down or up (negative of positive)
+	float y = y0 + sgn(x0)*0.5; 
 	
 	
 	if (abs(dx) >= abs(dy))
@@ -85,9 +83,39 @@ void drawLine(int x0, int y0, int x1, int y1, Color c) {
 		framebuffer.setPixelSafe(floor(x), floor(y), c);
 		x = x + Xincr; //paint each pixel every Xincr
 		y = y + Yincr; //paint each pixel every Yincr
-		if (mode = 5) {
+	}
+}
 
+//Draw a line using DDA Algorithm filling the table
+void drawLineFillingTable(int x0, int y0, int x1, int y1, Color c, std::vector<sCelda> &table) {
+	//DDA Algorithm
+	float steps;
+
+	float dx = x1 - x0; //difference of x
+	float dy = y1 - y0; //difference of y
+	float x = x0 + sgn(x0)*0.5; //to see if the lines are going down or up (negative of positive)
+	float y = y0 + sgn(x0)*0.5;
+
+
+	if (abs(dx) >= abs(dy))
+		steps = abs(dx); //calculate the number of iterations to paint the pixels
+	else
+		steps = abs(dy);
+
+	float Xincr = dx / steps; //increment for x in each pixel
+	float Yincr = dy / steps; //increment for y in each pixel
+
+	for (int v = 0; v <= steps; v++)
+	{
+		framebuffer.setPixelSafe(x, y, c);
+		if (x < table[y].minx) {
+			table[y].minx = x;
 		}
+		if (x > table[y].maxx) {
+			table[y].maxx = x;
+		}
+		x = x + Xincr; //paint each pixel every Xincr
+		y = y + Yincr; //paint each pixel every Yincr
 	}
 }
 
@@ -131,39 +159,7 @@ void drawCircle(Image* img, int x, int y, int r, Color c, bool fill) {
 	}
 }
 
-
-//void fillBottonFlatTriangle(Image* img, int x0, int y0, int x1, int y1, int x2, int y2, Color c) {
-//	//Calculate the slope of each side
-//	float slope1 = (x1 - x0) / ((y1 - y0) + 1);
-//	float slope2 = (x2 - x0) / ((y2 - y0) + 1);
-//
-//	float curx1 = x0;
-//	float curx2 = x0;
-//
-//	for (int scanlineY = y0; scanlineY <= y1; scanlineY++) {
-//		drawLine(img, (int)curx1, scanlineY, (int)curx2, scanlineY, c);
-//		curx1 += slope1;
-//		curx2 += slope2;
-//	}
-//}
-//
-//void fillTopFlatTriangle(Image* img, int x0, int y0, int x1, int y1, int x2, int y2, Color c) {
-//	//Calculate the slope of each side
-//	float slope1 = (x2 - x0) / ((y2 - y0));
-//	float slope2 = (x2 - x1) / ((y2 - y1));
-//
-//	float curx1 = x2;
-//	float curx2 = x2;
-//
-//	for (int scanlineY = y2; scanlineY <= y0; scanlineY--) {
-//		drawLine(img, (int)curx1, scanlineY, (int)curx2, scanlineY, c);
-//		curx1 -= slope1;
-//		curx2 -= slope2;
-//	}
-//}
-
 //Draw a triangle given 3 dots
-//raster a triangle
 void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, Color c, bool fill)
 {
 	if (!fill) {
@@ -173,95 +169,29 @@ void drawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, Color c, bool 
 		drawLine(x2, y2, x0, y0, c);
 	}
 	else {
+
 		std::vector<sCelda> table;
 		table.resize(framebuffer.height);
-		int maxY = max(y0, y1, y2);
-		int minY = min(y0, y1, y2);
 		//inicializar tabla
 		for (int i = 0; i < table.size(); i++)
 		{
 			table[i].minx = 100000; //very big number
 			table[i].maxx = -100000; //very small number
 		}
-		for (int j = minY; j < maxY; j++)
-		{
-			if (table[j].maxx < x0) table[j].maxx = x0;
-			if (table[j].minx > x0) table[j].minx = x0;
-			if (table[j].maxx < x1) table[j].maxx = x1;
-			if (table[j].minx > x1) table[j].minx = x1;
-			if (table[j].maxx < x2) table[j].maxx = x2;
-			if (table[j].minx > x2) table[j].minx = x2;
-		}
-		for (int j = minY; j < maxY; j++) {
-			drawLine(table[j].minx, j, table[j].maxx, j, c);
+
+		drawLineFillingTable(x0, y0, x1, y1, c, table);
+		drawLineFillingTable(x1, y1, x2, y2, c, table);
+		drawLineFillingTable(x2, y2, x0, y0, c, table);
+
+		for (int j = 0; j < table.size(); j++) {
+			if (table[j].minx < table[j].maxx) {
+				drawLine(table[j].minx, j, table[j].maxx, j, c);
 			}
 		}
 	}
+}
 
-	//… raster lines algorithm
-	//… filling triangle algorithm
-
-//void drawTriangle(Image* img, int x0, int y0, int x1, int y1, int x2, int y2, Color c, bool fill) {
-//	//int aux1,aux2;
-//	//if (max(y0, y1, y2) == y1) {
-//	//	aux1 = x0;
-//	//	aux2 = y0;
-//	//	x0 = x1;
-//	//	y0 = y1;
-//	//	x1 = aux1;
-//	//	y1 = aux2;
-//	//} else if (max(y0, y1, y2) == y2) {
-//	//	aux1 = x0;
-//	//	aux2 = y0;
-//	//	x0 = x2;
-//	//	y0 = y2;
-//	//	x2 = aux1;
-//	//	y2 = aux2;
-//	//}
-//	//if (min(y0, y1, y2) == y0) {
-//	//	aux1 = x2;
-//	//	aux2 = y2;
-//	//	x2 = x0;
-//	//	y2 = y0;
-//	//	x0 = aux1;
-//	//	y0 = aux2;
-//	//}else if (min(y0, y1, y2) == y1) {
-//	//	aux1 = x2;
-//	//	aux2 = y2;
-//	//	x2 = x1;
-//	//	y2 = y1;
-//	//	x1 = aux1;
-//	//	y1 = aux2;
-//	//}
-//
-//	//Draw the triangle
-//	drawLine(img, x0, y0, x1, y1, c);
-//	drawLine(img, x1, y1, x2, y2, c);
-//	drawLine(img, x2, y2, x0, y0, c);
-//	//if (fill == true) {
-//	//	
-//	//	if (y1 == y2) {
-//	//		fillBottonFlatTriangle(img, x0, y0, x1, y1, x2, y2, c);
-//	//		std::cout<<"Cas1";
-//	//	}
-//	//	else if (y0 == y1) {
-//	//		fillTopFlatTriangle(img, x0, y0, x1, y1, x2, y2, c);
-//	//		std::cout << "Cas2";
-//	//	}
-//	//	else {
-//	//		std::cout << "Cas3";
-//	//		int x4 = (int)(x0 + ((float)(y1 - y0) / (float)(y2 - y0)) * (x2 - x0));
-//	//		int y4 = y1;
-//	//		fillBottonFlatTriangle(img, x0, y0, x1, y1, x2, y2, c);
-//	//		fillTopFlatTriangle(img, x0, y0, x1, y1, x2, y2, c);
-//
-//	//	}
-//
-//	//}
-//
-//	
-//
-//}
+	
 
 //render one frame
 void Application::render(void)
