@@ -2,9 +2,9 @@ P2
 
 Members:
 
-- Ever García (194628 - U137574)
-- Carlos Bertomeu ()
-- Roger Caritj ()
+- Ever Garcï¿½a (194628 - U137574)
+- Carlos Bertomeu (183768 - U124294)
+- Roger Caritj (183714 - U124305)
 
 Functionalities:
 
